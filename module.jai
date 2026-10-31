@@ -2,3 +2,4 @@
 #load "name.jai";
 #load "image.jai";
 #load "sound.jai";
+#load "binary.jai";
