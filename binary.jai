@@ -20,7 +20,7 @@ make_binary :: inline (size: s64, default_value: u8) -> Binary {
     return result;
 }
 
-make_binary :: inline (data: *u8, size: s64) -> Binary {
+shallow_copy_binary :: inline (data: *u8, size: s64) -> Binary {
     result: Binary;
     result.data.data = data;
     result.data.count = size;
@@ -29,7 +29,7 @@ make_binary :: inline (data: *u8, size: s64) -> Binary {
     return result;
 }
 
-copy_binary :: inline (data: *u8, size: s64) -> Binary {
+deep_copy_binary :: inline (data: *u8, size: s64) -> Binary {
     result: Binary;
     array_resize(*result.data, size, false);
     if size > 0 {
