@@ -3,7 +3,6 @@
 #load "image.jai";
 #load "sound.jai";
 #load "binary.jai";
-#load "checked_allocation.jai";
 
 /**
  * @brief Copies a string, returning false before copying if allocation fails.
