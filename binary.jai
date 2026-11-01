@@ -38,6 +38,50 @@ deep_copy_binary :: inline (data: *u8, size: s64) -> Binary {
     return result;
 }
 
+shallow_copy_binary :: inline (binary: Binary) -> Binary {
+    shallow_copy_binary(binary.data, binary.size);
+}
+
+deep_copy_binary :: inline (binary: Binary) -> Binary {
+    deep_copy_binary(binary.data, binary.size);
+}
+
+try_make_binary :: inline (size: s64, default_value: u8 = 0) -> Binary, bool {
+    if size < 0 {
+        return .{}, false;
+    }
+
+    if size == 0 {
+        return .{}, true;
+    }
+
+    data := cast(*u8)alloc(size);
+    if data == null {
+        return .{}, false;
+    }
+
+    memset(data, default_value, size);
+    return shallow_copy_binary(data, size), true;
+}
+
+try_deep_copy_binary :: inline (data: *u8, size: s64) -> Binary, bool {
+    if size < 0 || (size > 0 && data == null) {
+        return .{}, false;
+    }
+
+    if size == 0 {
+        return .{}, true;
+    }
+
+    copy := cast(*u8)alloc(size);
+    if copy == null {
+        return .{}, false;
+    }
+
+    memcpy(copy, data, size);
+    return shallow_copy_binary(copy, size), true;
+}
+
 get_binary_data :: inline (binary: Binary) -> *u8 {
     return binary.data.data;
 }

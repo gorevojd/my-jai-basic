@@ -50,8 +50,23 @@ operator == :: (a: Name, b: Name) -> bool {
     - The first call also initializes synchronization.
 */
 make_name :: (text: string) -> Name {
+    result, success := try_make_name(text);
+    Basic.assert(success, "Could not allocate interned Name storage.");
+    return result;
+}
+
+/**
+ * @brief Interns text with checked string and table allocations.
+ * @param[in] text Valid source bytes, borrowed only for this call.
+ * @return Canonical Name and success flag. Failure publishes no new name; existing names remain valid.
+ * @note Uses the process-lived default allocator, never the caller's temporary allocator.
+ */
+try_make_name :: (text: string) -> Name, bool {
+    if text.count < 0 || (text.count > 0 && text.data == null) {
+        return .{}, false;
+    }
     if text.count == 0 {
-        return .{};
+        return .{}, true;
     }
 
     ensure_name_storage();
@@ -60,14 +75,22 @@ make_name :: (text: string) -> Name {
 
     found, canonical := Tables.table_find(*name_storage.by_text, text);
     if found {
-        return .{canonical};
+        return .{canonical}, true;
     }
 
     // Never inherit a caller's temporary allocator. The default allocator must be process-lived.
     Basic.push_allocator(context.default_allocator);
-    canonical = Basic.copy_string(text);
+    if !try_grow_name_table() {
+        return .{}, false;
+    }
+
+    copied: bool;
+    canonical, copied = try_copy_string(text);
+    if !copied {
+        return .{}, false;
+    }
     Tables.table_add(*name_storage.by_text, canonical, canonical);
-    return .{canonical};
+    return .{canonical}, true;
 }
 
 name_hash :: (name: Name) -> u32 {
@@ -99,12 +122,60 @@ Name_Storage :: struct {
 
 name_storage: Name_Storage;
 
+try_grow_name_table :: () -> bool {
+    table := *name_storage.by_text;
+    if (table.slots_filled + 1) * 100 < table.allocated * table.LOAD_FACTOR_PERCENT {
+        return true;
+    }
+
+    replacement: Tables.Table(string, string);
+    replacement.allocator = table.allocator;
+    if replacement.allocator.proc == null {
+        replacement.allocator = context.default_allocator;
+    }
+
+    // This private table has no removals: doubling leaves room for every old entry and the new name.
+    Entry :: Tables.Table(string, string).Entry;
+    MAX_CAPACITY :: #run 0x7fffffffffffffff / Basic.max(size_of(Entry), 100);
+    capacity := table.allocated;
+    if capacity == 0 {
+        capacity = table.SIZE_MIN;
+    }
+    else {
+        if capacity > MAX_CAPACITY / 2 {
+            return false;
+        }
+        capacity *= 2;
+    }
+
+    bytes := capacity * size_of(Entry);
+    entries := cast(*Entry)Basic.alloc(bytes,, replacement.allocator);
+    if entries == null {
+        return false;
+    }
+
+    memset(entries, 0, bytes);
+    replacement.entries.data = entries;
+    replacement.entries.count = capacity;
+    replacement.allocated = capacity;
+    for entry: table.entries {
+        if entry.hash >= Tables.FIRST_VALID_HASH {
+            Tables.table_add(*replacement, entry.key, entry.value);
+        }
+    }
+
+    Tables.deinit(table);
+    table.* = replacement;
+    return true;
+}
+
 ensure_name_storage :: () {
     if compare_and_swap(*name_storage.status, .Uninitialized, .Initializing) {
         Threads.init(*name_storage.mutex);
         Atomics.atomic_swap(*name_storage.status, .Ready);
         return;
     }
+
     // CAS supplies synchronization even where the standard atomic_read is just a plain load.
     while !compare_and_swap(*name_storage.status, .Ready, .Ready) {
         Basic.sleep_milliseconds(0);
