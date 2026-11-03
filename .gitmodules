@@ -4,3 +4,6 @@
 [submodule "MyName"]
 	path = MyName
 	url = https://github.com/gorevojd/my-jai-name.git
+[submodule "MyBlob"]
+	path = MyBlob
+	url = https://github.com/gorevojd/my-jai-blob.git

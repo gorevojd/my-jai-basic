@@ -3,7 +3,3 @@
 Name_Set :: struct {
     using set: HashSet(Name, name_hash, names_equal);
 }
-
-#scope_file
-#import "MyBasic/MyHashSet";
-#import "MyBasic/MyName";

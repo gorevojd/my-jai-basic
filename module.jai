@@ -1,7 +1,10 @@
+using MyName :: #import "MyBasic/MyName";
+using MyHashSet :: #import "MyBasic/MyHashSet";
+using MyBlob :: #import "MyBasic/MyBlob";
+
 #load "string_utils.jai";
 #load "image.jai";
 #load "sound.jai";
-#load "binary.jai";
 #load "name_set.jai";
 
 /**
