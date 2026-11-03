@@ -2,6 +2,7 @@
 #load "image.jai";
 #load "sound.jai";
 #load "binary.jai";
+#load "name_set.jai";
 
 /**
  * @brief Copies a string, returning false before copying if allocation fails.
