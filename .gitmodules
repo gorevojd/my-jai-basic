@@ -1,3 +1,6 @@
 [submodule "MyHashSet"]
 	path = MyHashSet
 	url = https://github.com/gorevojd/my-jai-hash-set.git
+[submodule "MyName"]
+	path = MyName
+	url = https://github.com/gorevojd/my-jai-name.git
