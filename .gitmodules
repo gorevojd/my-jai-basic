@@ -7,3 +7,9 @@
 [submodule "MyBlob"]
 	path = MyBlob
 	url = https://github.com/gorevojd/my-jai-blob.git
+[submodule "MyMath"]
+	path = MyMath
+	url = https://github.com/gorevojd/my-jai-math.git
+[submodule "MyCurve"]
+	path = MyCurve
+	url = https://github.com/gorevojd/my-jai-curve.git

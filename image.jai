@@ -6,6 +6,15 @@ Image :: struct {
     width_over_height: float; @NonSerializeField
 
     data: *u8; @NonSerializeField
+
+    finalize_descriptor :: (image: *Image) -> bool {
+        if image.height <= 0 return false;
+
+        image.width_over_height = cast(float) image.width / cast(float) image.height;
+        image.data = null;
+
+        return true;
+    }
 }
 
 /**
@@ -98,9 +107,10 @@ write_one_image_into_another :: (dst: *Image, x: u32, y: u32, src: Image) {
         for column: 0..copy_width - 1 {
             inverse_alpha := 255 - cast(u32)src_pixel[3];
             // RGB is already premultiplied. Apply source-over to all four channels, rounding to the nearest byte.
-            for channel: 0..3 {
-                dst_pixel[channel] = cast(u8)(cast(u32)src_pixel[channel] + (cast(u32)dst_pixel[channel] * inverse_alpha + 127) / 255);
-            }
+            dst_pixel[0] = cast(u8)(cast(u32)src_pixel[0] + (cast(u32)dst_pixel[0] * inverse_alpha + 127) / 255);
+            dst_pixel[1] = cast(u8)(cast(u32)src_pixel[1] + (cast(u32)dst_pixel[1] * inverse_alpha + 127) / 255);
+            dst_pixel[2] = cast(u8)(cast(u32)src_pixel[2] + (cast(u32)dst_pixel[2] * inverse_alpha + 127) / 255);
+            dst_pixel[3] = cast(u8)(cast(u32)src_pixel[3] + (cast(u32)dst_pixel[3] * inverse_alpha + 127) / 255);
             dst_pixel += 4;
             src_pixel += 4;
         }
@@ -108,7 +118,7 @@ write_one_image_into_another :: (dst: *Image, x: u32, y: u32, src: Image) {
 }
 
 #scope_file
-Math :: #import "MyMath";
+Math :: #import "MyBasic/MyMath";
 
 image_color_to_pixel :: (color: Math.Color) -> Math.Color {
     linear := Math.srgb_to_linear_accurate(Math.get_float_representation(color));
